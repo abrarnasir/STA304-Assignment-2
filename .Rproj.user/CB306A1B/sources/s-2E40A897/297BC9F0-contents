@@ -1,0 +1,348 @@
+---
+title: "Multilevel Regression Solutions"
+author: "Samantha-Jo Caetano"
+date: "November 15, 2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Getting Started
+
+Let's first load in the tidyverse and lme4 packages.
+
+```{r}
+library(tidyverse)
+#install.packages("lme4")
+library(lme4)
+#install.packages("merTools")
+library(merTools)
+```
+
+
+
+```{r}
+# ?hsb or help(hsb) to learn a bit more about the data.
+
+hsb_data <- hsb
+
+glimpse(hsb_data)
+```
+
+# Exploratory Data Analysis
+
+Let's just get to know the data a bit. We are gonna be predicting math scores (mathach) and we will be using the following variables at some point: school id (schid) and socioeconomic status (ses). Let's just get to know each of these variables a bit before going into the modelling.
+
+## Math Scores
+
+```{r}
+hist(hsb_data$mathach)
+boxplot(hsb_data$mathach)
+summary(hsb_data$mathach)
+
+hsb_data %>% summarise(n=n(),
+                       mean=mean(mathach),
+                       sd=sd(mathach),
+                       min = min(mathach),
+                       max = max(mathach))
+
+ggplot(data = hsb_data, aes(x=mathach)) + 
+  geom_histogram(colour="black", fill="grey", bins=15) +
+  theme_minimal() 
+
+ggplot(data = hsb_data, aes(y=mathach)) + 
+  geom_boxplot(colour="black", fill="grey") +
+  theme_minimal() +
+  theme(axis.ticks.x = element_blank(), # removes x-axis ticks and scale
+        axis.text.x = element_blank()) 
+
+```
+
+## School ID
+
+```{r}
+hsb_data %>% group_by(schid) %>% 
+                      summarise(n=n(),
+                       mean=mean(mathach),
+                       sd=sd(mathach),
+                       min = min(mathach),
+                       max = max(mathach))
+
+
+# how many distinct schools are there?
+
+hsb_data %>% group_by(schid) %>% summarise() %>% summarise(n=n())
+
+ggplot(data = hsb_data, aes(y=mathach, x=schid)) + 
+  geom_boxplot(colour="black", fill="grey") +
+  theme_minimal() 
+```
+
+## Socioeconomic Status
+
+```{r}
+## Math Scores
+
+hist(hsb_data$ses)
+boxplot(hsb_data$ses)
+summary(hsb_data$ses)
+
+hsb_data %>% summarise(n=n(),
+                       mean=mean(ses),
+                       sd=sd(ses),
+                       min = min(ses),
+                       max = max(ses))
+
+## SES vs Math Scores
+plot(hsb_data$ses, hsb_data$mathach)
+cor(hsb_data$ses, hsb_data$mathach)
+
+```
+
+## School ID, SES & Math Scores
+
+Let's look at the relationship between ses and math scores, for the different schools. Create some scatterplots.
+
+```{r}
+hsb_data %>% mutate(newid = as.numeric(schid)) %>% 
+  filter(newid < 2000) %>%  
+  ggplot(aes(x=ses, y=mathach, color=schid)) + 
+  geom_point(size=2)
+
+
+hsb_data %>% mutate(newid = as.numeric(schid)) %>% 
+  filter(newid > 2000 & newid < 3000) %>%  
+  ggplot(aes(x=ses, y=mathach, color=schid)) + 
+  geom_point(size=2)
+
+```
+
+
+Okay, let's look at the mean math scores, mean ses and correlation of math scores and SES across different schools. Create a summary table.
+
+```{r}
+hsb_data %>% group_by(schid) %>% 
+  summarise(mean_math = mean(mathach),
+            mean_ses = mean(ses),
+            r = cor(mathach, ses))
+
+```
+
+Let's plot the above three to see what they look like diagnostically. You could also create another summary table of the summary table.
+
+```{r}
+hsb_data %>% group_by(schid) %>% 
+  summarise(mean_math = mean(mathach),
+            mean_ses = mean(ses),
+            r = cor(mathach, ses)) %>% 
+  ggplot(aes(x=mean_math))+geom_histogram()
+
+
+hsb_data %>% group_by(schid) %>% 
+  summarise(mean_math = mean(mathach),
+            mean_ses = mean(ses),
+            r = cor(mathach, ses)) %>% 
+  ggplot(aes(x=mean_ses))+geom_histogram()
+
+
+hsb_data %>% group_by(schid) %>% 
+  summarise(mean_math = mean(mathach),
+            mean_ses = mean(ses),
+            r = cor(mathach, ses)) %>% 
+  ggplot(aes(x=r))+geom_histogram()
+```
+
+
+## Extra Exploratory Data Analysis
+
+### Gender
+
+```{r}
+hsb_data %>% group_by(female) %>% 
+                      summarise(n=n(),
+                       mean=mean(mathach),
+                       sd=sd(mathach),
+                       min = min(mathach),
+                       max = max(mathach))
+
+ggplot(data = hsb_data, aes(x=female)) + 
+  geom_bar(colour="black", fill="grey") +
+  theme_minimal() 
+
+ggplot(data = hsb_data, aes(y=mathach, x=as.factor(female))) + 
+  geom_boxplot(colour="black", fill="grey") +
+  theme_minimal() 
+```
+
+### Private School
+
+```{r}
+hsb_data %>% group_by(schtype) %>% 
+                      summarise(n=n(),
+                       mean=mean(mathach),
+                       median = median(mathach),
+                       sd=sd(mathach),
+                       min = min(mathach),
+                       max = max(mathach))
+
+ggplot(data = hsb_data, aes(x=schtype)) + 
+  geom_bar(colour="black", fill="grey") +
+  theme_minimal() 
+
+ggplot(data = hsb_data, aes(y=mathach, x=as.factor(schtype))) + 
+  geom_boxplot(colour="black", fill="grey") +
+  theme_minimal() 
+```
+
+
+\newpage
+
+# Linear Regression
+
+## Random Intercept Models
+
+### With no Level I predictors
+
+Let's try to look at student math scores based solely on school id as a level 2 variable.
+
+So we are estimating: $$y_{ij} = \beta_0 + v_{oj} + \epsilon_{ij} $$
+where $y$ is math scores.
+
+```{r}
+model1 <- lmer(mathach ~ 1 + (1|schid), REML=FALSE, data=hsb)
+
+# REML - Restricted Maximum Likelihood Estimation
+summary(model1)
+confint(model1)
+```
+
+Recall, there is an alternative way to write the model.
+
+```{r}
+alt_model1 <- lmer(mathach ~ (1|schid), REML=FALSE, data=hsb)
+summary(alt_model1)
+```
+
+On average each school has an average math score of 12.6371 with a variance of 8.553.
+
+Let's just make a note that the residual sd is 6.257, let's see if that improves (gets smaller) as we update the model.
+
+We can even make a prediction. What is the predicted math score of a student who went to school 1224?
+
+```{r}
+predict(model1, tibble(schid="1224"))
+predict(alt_model1, tibble(schid="1224"))
+```
+
+Let's compare that with some of our EDA.
+
+```{r}
+hsb_data %>% summarise(n=n(), mean=mean(mathach))
+
+hsb_data %>% group_by(schid) %>% 
+                      summarise(n=n(),
+                       mean=mean(mathach))
+```
+
+
+### With Level I Predictors
+
+Let's predict math scores with SES as a level I predictor still using a random intercept model, with school as the level II variable. So we are estimating: $$y_{ij} = \beta_0 + \beta_1 x_{ij} + v_{oj} + \epsilon_{ij} $$
+where $y$ is math scores and $x$ is the SES.
+
+```{r}
+model2 <- lmer(mathach ~ 1+ses+(1|schid), REML=FALSE, data=hsb)
+alt_model2 <- lmer(mathach ~ ses+(1|schid), REML=FALSE, data=hsb)
+
+# REML - Restricted Maximum Likelihood Estimation
+summary(model2)
+```
+
+Now we can see the estimate of the fixed effects are: 12.6576 for the intercept and 2.3915 for the slope of ses and math scores. So for every one unit increase in ses we expect a 2.3915 unit increase in math scores. Fixed effects are interpreted same as standard regression model.
+
+Note, the residual sds is 6.085, so adding in SES has helped improve the model a bit.
+
+Below will give you the confidence intervals of parameters estimated by the model.
+ 
+```{r}
+confint(model2)
+```
+
+
+What is the predicted math score of a female student with SES of 0.4 who went to school 6816?
+
+```{r}
+predict(model2, tibble(schid="6816", female=1, ses=0.4))
+predict(model2, tibble(schid="6816", ses=0.4))
+```
+
+
+## Random Slope Model
+
+Let's assume that we want to model the SES slope based on the school cluster. 
+
+$$Y_{ij} = \beta_0 + \beta_1 X_{ij} + v_{0j} + w_j X_{ij} + \epsilon_{ij} $$
+
+```{r}
+model3 <- lmer(mathach ~ ses+(ses|schid), REML=FALSE, data=hsb)
+
+# REML - Restricted Maximum Likelihood Estimation
+summary(model3)
+confint(model3)
+```
+
+# Logsitic Regression
+
+Let's build similar models, but assume our outcome is instead "scored in top 50th percentile" (binary). Let's create this new outcome variable here:
+
+```{r}
+median(hsb_data$mathach)
+
+hsb_data <- hsb_data %>% mutate(top50math = case_when(mathach>=median(hsb_data$mathach)~1,
+                                          mathach<median(hsb_data$mathach)~0))
+```
+
+
+Okay, now that we have our outcome variable, let's build a random intercept model, with just school id.
+
+```{r}
+logmodel1 <- glmer(top50math ~ (1|schid), data=hsb_data, family="binomial")
+summary(logmodel1)
+confint(logmodel1)
+```
+
+Again, we can even make a prediction. What is the predicted probability of scoring in top 50 percentile of a student who went to school 1224?
+
+```{r}
+predict(logmodel1, tibble(schid="1224"), type="response")
+
+### OR
+
+exp(predict(logmodel1, tibble(schid="1224")))/(1+exp(predict(logmodel1, tibble(schid="1224"))))
+```
+
+
+Okay, now let's add in those level I variables (female and ses).
+
+```{r}
+logmodel2 <- glmer(top50math ~ female+ses+(1|schid), data=hsb_data, family="binomial")
+summary(logmodel2)
+confint(logmodel2)
+```
+
+Again, we can make a prediction here. What is the predicted probability of scoring in top 50 percentile of a male student with SES 1.2 who went to school 1224?
+
+```{r}
+predict(logmodel2, tibble(schid="1224", female=0, ses=1.2), type="response")
+
+### OR
+
+exp(predict(logmodel2,  tibble(schid="1224", female=0, ses=1.2)))/(1+exp(predict(logmodel2,  tibble(schid="1224", female=0, ses=1.2))))
+```
+
+
+
+
