@@ -2,6 +2,7 @@ library(tidyverse)
 library(car)
 library(flexmix)
 library(pscl)
+library(patchwork)
 
 #census_data <- read_csv("gss_clean.csv")
 survey_data <- read_csv("ces2019-phone_clean.csv")
@@ -40,6 +41,32 @@ survey_data <- survey_data %>%
     democracy_satisfaction = p4,
     corruption = p26
   )
+
+hist1 <- ggplot(survey_data, aes(x = party_to_vote_for)) + geom_histogram()
+hist2 <- ggplot(survey_data, aes(x = age_range)) + geom_histogram()
+hist3 <- ggplot(survey_data, aes(x = gender)) + geom_histogram()
+hist4 <- ggplot(survey_data, aes(x = voting_probability)) + geom_histogram()
+hist5 <- ggplot(survey_data, aes(x = education_spending)) + geom_histogram()
+hist6 <- ggplot(survey_data, aes(x = environment_spending)) + geom_histogram()
+hist7 <- ggplot(survey_data, aes(x = crime_spending)) + geom_histogram()
+hist8 <- ggplot(survey_data, aes(x = defence_spending)) + geom_histogram()
+hist9 <- ggplot(survey_data, aes(x = immigrants_spending)) + geom_histogram()
+hist10 <- ggplot(survey_data, aes(x = relative_economic_performance)) + geom_histogram()
+hist11 <- ggplot(survey_data, aes(x = best_party_economic_performance)) + geom_histogram()
+hist12 <- ggplot(survey_data, aes(x = provincial_party_performance)) + geom_histogram()
+hist13 <- ggplot(survey_data, aes(x = education_level)) + geom_histogram()
+hist14 <- ggplot(survey_data, aes(x = religion_importance)) + geom_histogram()
+hist15 <- ggplot(survey_data, aes(x = employment_status)) + geom_histogram()
+hist16 <- ggplot(survey_data, aes(x = household_income)) + geom_histogram()
+hist17 <- ggplot(survey_data, aes(x = members_household)) + geom_histogram()
+hist18 <- ggplot(survey_data, aes(x = previous_voted_candidate)) + geom_histogram()
+hist19 <- ggplot(survey_data, aes(x = democracy_satisfaction)) + geom_histogram()
+hist20 <- ggplot(survey_data, aes(x = corruption)) + geom_histogram()
+
+hist1 + hist2 + hist3 + hist4 + hist5 + hist6 + hist7 + hist8 + hist9 + hist10 + hist11 + hist12 + hist13 + hist14 + hist15 + hist16 + hist17 + hist18 + hist19 + hist20 + plot_layout(nrow = 5, byrow = FALSE) + plot_annotation(title = 'Histograms of Variables')
+
+#dev.off() 
+#pairs(survey_data[, -c(1)])
 
 model0 <- glm(party_to_vote_for ~ gender +
                 age_range + 
