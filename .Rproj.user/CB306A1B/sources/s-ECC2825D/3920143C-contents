@@ -3,6 +3,7 @@ library(car)
 library(flexmix)
 library(pscl)
 library(patchwork)
+library(data.table)
 
 census_data <- read_csv("gss_clean.csv")
 survey_data <- read_csv("ces2019-phone_clean.csv")
@@ -13,7 +14,7 @@ survey_data <- read_csv("ces2019-phone_clean.csv")
 #survey_data <- survey_data %>% mutate(age = 2019-q2, vote_liberal = ifelse(q11==1, 1, 0)) %>% select(age, vote_liberal)
 #census_data <- census_data %>% mutate(age=round(age)) %>% select(age)
 
-vars1 <-  c("q11", "age", "q3", "q4", "q61", "q62", "q69",  "q71", "p50", "p56_1", "p56_2")
+vars1 <-  c("q11", "age", "q3", "q4", "q61", "q62", "q69", "p50", "p56_1", "p56_2")
 survey_data <- survey_data[vars1]
 survey_data <- drop_na(survey_data)
 
@@ -25,7 +26,6 @@ survey_data <- survey_data %>%
     education = q61,
     religion = q62,
     income = q69,
-    household = q71,
     marital_status = p50,
     english = p56_1,
     french = p56_2
@@ -41,32 +41,47 @@ survey_data$income[survey_data$income >= 50000 & survey_data$income <= 74999 ] <
 survey_data$income[survey_data$income >= 25000 & survey_data$income <= 49999 ] <- "$25,000 to $49,999"
 survey_data$income[survey_data$income >= 0 & survey_data$income < 25000 ] <- "Less than $25,000"
 survey_data <- survey_data[!(survey_data$income == -8 | survey_data$income == -9),]
-survey_data$religion[survey_data$religion== "-9"] <- "Don't know"
-survey_data$religion[survey_data$religion== "1"] <- "Has religious affiliation" 
-survey_data$religion[survey_data$religion== "2"] <- "Has religious affiliation"  
-survey_data$religion[survey_data$religion== "3"] <- "Has religious affiliation"  
-survey_data$religion[survey_data$religion== "4"] <- "Has religious affiliation"  
-survey_data$religion[survey_data$religion== "5"] <- "Has religious affiliation"  
-survey_data$religion[survey_data$religion== "6"] <- "Has religious affiliation"  
-survey_data$religion[survey_data$religion== "7"] <- "Has religious affiliation"  
-survey_data$religion[survey_data$religion== "8"] <- "Has religious affiliation"  
-survey_data$religion[survey_data$religion== "9"] <- "Has religious affiliation"  
-survey_data$religion[survey_data$religion== "10"] <- "Has religious affiliation"  
-survey_data$religion[survey_data$religion== "11"] <- "Has religious affiliation"  
-survey_data$religion[survey_data$religion== "12"] <- "Has religious affiliation"  
-survey_data$religion[survey_data$religion== "13"] <- "Has religious affiliation"  
-survey_data$religion[survey_data$religion== "14"] <- "Has religious affiliation"  
-survey_data$religion[survey_data$religion== "15"] <- "Has religious affiliation"  
-survey_data$religion[survey_data$religion== "16"] <- "Has religious affiliation"  
-survey_data$religion[survey_data$religion== "17"] <- "Has religious affiliation"  
-survey_data$religion[survey_data$religion== "18"] <- "Has religious affiliation"  
-survey_data$religion[survey_data$religion== "19"] <- "Has religious affiliation"  
-survey_data$religion[survey_data$religion== "20"] <- "Has religious affiliation"  
-survey_data$religion[survey_data$religion== "21"] <- "No religious affiliation"
-survey_data$religion[survey_data$religion== "22"] <- "No religious affiliation"
+survey_data$religion[survey_data$religion == "-9"] <- "Don't know"
+survey_data$religion[survey_data$religion == "1"] <- "Has religious affiliation" 
+survey_data$religion[survey_data$religion == "2"] <- "Has religious affiliation"  
+survey_data$religion[survey_data$religion == "3"] <- "Has religious affiliation"  
+survey_data$religion[survey_data$religion == "4"] <- "Has religious affiliation"  
+survey_data$religion[survey_data$religion == "5"] <- "Has religious affiliation"  
+survey_data$religion[survey_data$religion == "6"] <- "Has religious affiliation"  
+survey_data$religion[survey_data$religion == "7"] <- "Has religious affiliation"  
+survey_data$religion[survey_data$religion == "8"] <- "Has religious affiliation"  
+survey_data$religion[survey_data$religion == "9"] <- "Has religious affiliation"  
+survey_data$religion[survey_data$religion == "10"] <- "Has religious affiliation"  
+survey_data$religion[survey_data$religion == "11"] <- "Has religious affiliation"  
+survey_data$religion[survey_data$religion == "12"] <- "Has religious affiliation"  
+survey_data$religion[survey_data$religion == "13"] <- "Has religious affiliation"  
+survey_data$religion[survey_data$religion == "14"] <- "Has religious affiliation"  
+survey_data$religion[survey_data$religion == "15"] <- "Has religious affiliation"  
+survey_data$religion[survey_data$religion == "16"] <- "Has religious affiliation"  
+survey_data$religion[survey_data$religion == "17"] <- "Has religious affiliation"  
+survey_data$religion[survey_data$religion == "18"] <- "Has religious affiliation"  
+survey_data$religion[survey_data$religion == "19"] <- "Has religious affiliation"  
+survey_data$religion[survey_data$religion == "20"] <- "Has religious affiliation"  
+survey_data$religion[survey_data$religion == "21"] <- "No religious affiliation"
+survey_data$religion[survey_data$religion == "22"] <- "No religious affiliation"
 survey_data <- survey_data[!(survey_data$religion == -8),]
+survey_data <- survey_data[!(survey_data$english == 1 & survey_data$french == 1),]
+survey_data <- survey_data[!(survey_data$english == 0 & survey_data$french == 0),]
+survey_data <- survey_data[!(survey_data$english == -9 | survey_data$english == -8),]
+survey_data <- survey_data[!(survey_data$french == -9 | survey_data$french == -8),]
+survey_data <- subset(survey_data, select = -c(french))
+survey_data <- survey_data %>% rename(language = english)
+survey_data$religion[survey_data$religion == "No religious affiliation"] <- 2
+survey_data$religion[survey_data$religion == "Has religious affiliation"] <- 1
+survey_data$religion[survey_data$religion == "Don't know"] <- 0
+survey_data$income[survey_data$income == "Less than $25,000"] <- 1
+survey_data$income[survey_data$income == "$25,000 to $49,999"] <- 2
+survey_data$income[survey_data$income == "$50,000 to $74,999"] <- 3
+survey_data$income[survey_data$income == "$75,000 to $99,999"] <- 4
+survey_data$income[survey_data$income == "$100,000 to $ 124,999"] <- 5
+survey_data$income[survey_data$income == "$125,000 and more"] <- 6
 
-vars2 <- c("age", "province", "sex", "marital_status", "education", "living_arrangement", "religion_has_affiliation", "language_home", "income_family")
+vars2 <- c("age", "province", "sex", "marital_status", "education", "religion_has_affiliation", "language_home", "income_family")
 census_data <- census_data[vars2]
 census_data <- drop_na(census_data)
 census_data$age <- round(census_data$age)
@@ -91,6 +106,34 @@ census_data$marital_status[census_data$marital_status== "Divorced"] <- 3
 census_data$marital_status[census_data$marital_status== "Separated"] <- 4
 census_data$marital_status[census_data$marital_status== "Widowed"] <- 5
 census_data$marital_status[census_data$marital_status== "Single, never married"] <- 6
+census_data <- census_data[!(census_data$language_home == "English, French and non-official language"),]
+census_data <- census_data[!(census_data$language_home == "English and non-official language "),]
+census_data <- census_data[!(census_data$language_home == "French and non-official language"),]
+census_data <- census_data[!(census_data$language_home == "Non-official languages"),]
+census_data <- census_data[!(census_data$language_home == "Multiple non-official languages"),]
+census_data <- census_data[!(census_data$language_home == "English and non-official language"),]
+census_data <- census_data[!(census_data$language_home == "English and French"),]
+census_data <- census_data %>% rename(language = language_home)
+census_data$language[census_data$language== "English"] <- 1
+census_data$language[census_data$language== "French"] <- 0
+census_data$education[census_data$education == "Bachelor's degree (e.g. B.A., B.Sc., LL.B.)"] <- 9
+census_data$education[census_data$education == "College, CEGEP or other non-university certificate or di..."] <- 7
+census_data$education[census_data$education == "High school diploma or a high school equivalency certificate"] <- 5
+census_data$education[census_data$education == "Less than high school diploma or its equivalent"] <- 3
+census_data$education[census_data$education == "Trade certificate or diploma"] <- 7
+census_data$education[census_data$education == "University certificate or diploma below the bachelor's level"] <- 7
+census_data$education[census_data$education == "University certificate, diploma or degree above the bach..."] <- 10
+census_data <- census_data %>% rename(religion = religion_has_affiliation)
+census_data$religion[census_data$religion == "No religious affiliation"] <- 2
+census_data$religion[census_data$religion == "Has religious affiliation"] <- 1
+census_data$religion[census_data$religion == "Don't know"] <- 0
+census_data <- census_data %>% rename(income = income_family)
+census_data$income[census_data$income == "Less than $25,000"] <- 1
+census_data$income[census_data$income == "$25,000 to $49,999"] <- 2
+census_data$income[census_data$income == "$50,000 to $74,999"] <- 3
+census_data$income[census_data$income == "$75,000 to $99,999"] <- 4
+census_data$income[census_data$income == "$100,000 to $ 124,999"] <- 5
+census_data$income[census_data$income == "$125,000 and more"] <- 6
 
 party <- c("Liberal", "Conservative")
 count <- c(123, 147)
@@ -126,20 +169,20 @@ full <- glm(party_to_vote_for ~.,
               data = survey_data, family = "binomial")
 summary(full)
 
-reduced0 <- glm(party_to_vote_for ~ environment_spending +
-                immigrants_spending +
-                best_party_economic_performance +
-                education_level +
-                previous_voted_candidate, 
-              data = survey_data, family = "binomial")
+reduced0 <- glm(party_to_vote_for ~ sex +
+                  province +
+                  education +
+                  marital_status +
+                  language, 
+                data = survey_data, family = "binomial")
 summary(reduced0)
 
-reduced1 <- glm(party_to_vote_for ~ environment_spending +
-                 immigrants_spending +
-                 best_party_economic_performance +
-                 previous_voted_candidate, 
-               data = survey_data, family = "binomial")
-summary(reduced1)
+#reduced1 <- glm(party_to_vote_for ~ environment_spending +
+#                 immigrants_spending +
+#                 best_party_economic_performance +
+#                 previous_voted_candidate, 
+#               data = survey_data, family = "binomial")
+#summary(reduced1)
 
 #model0_lib <- glm(party_to_vote_for ~ gender +
 #                age + 
@@ -198,11 +241,27 @@ summary(reduced1)
 
 BIC(full)
 BIC(reduced0)
-BIC(reduced1)
+#BIC(reduced1)
 
 pR2(full)['McFadden']
 pR2(reduced0)['McFadden']
-pR2(reduced1)['McFadden']
+#pR2(reduced1)['McFadden']
 
+bins <- census_data
+vars3 <- c("sex", "province", "education", "marital_status", "language")
+bins <- bins[vars3]
 
+bins <- setDT(bins)[,list(Count=.N), names(bins)]
+N <- sum(bins$Count)
+bins$proportion <- bins$Count / N
 
+bin <- lapply(bins, as.numeric)
+
+bin$estimate <- reduced0 %>% predict(newdata = bin)
+
+bins$estimate <- bin$estimate
+
+y_ps <- bins[c(51, 123, 5, 14, 228),]
+y_ps$y_ps <- y_ps$proportion * y_ps$estimate * 100
+
+y_ps <- y_ps %>% rename(count = Count)
