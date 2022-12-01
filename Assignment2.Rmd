@@ -288,7 +288,9 @@ The response variable in our analysis is ‘party to vote for’ which represent
 
 The common predictor variables in both the datasets are sex, age, province they currently live in, marital status, education attainment, whether or not they have any religious affiliations, the language they speak, and their household income which are explained in detail in Table 1. 
 
-**Table 1** explains the important variables of the analysis.
+\newpage
+
+**Table 1** explains the important variables of the analysis:
 
 \begin{center}
     \begin{tabular}{ | l |p{7cm} |}
@@ -318,7 +320,7 @@ sd(survey_data$age)
 
 ```
 
-**Table 2** provides the numerical summary of the age and household income of the individuals who took part in the survey. It shows the center, spread and the maximum-minimum statistics of the sample data. 
+**Table 2** provides the numerical summary of the age and household income of the individuals who took part in the survey. It shows the center, spread and the maximum-minimum statistics of the sample data: 
 
 |                        | Min | 1st Quartile | Median | Mean | Std. Deviation | 3rd Quartile | Max |
 |:----------------------|:-------:|:------------:|:------:|:----:|:------------------:|:------------:|:-------:|
@@ -442,7 +444,7 @@ pR2(reduced0)['McFadden']
 # broom::tidy(model)
 ```
 
- *Table 3*
+ **Table 3:**
  
 |                       | Saskatchewan | Alberta |  Female | Income (CAD75000-CAD99999) | 
 |:----------------------|:-------:|:------------:|:---------:|:-----------------:|
@@ -451,7 +453,9 @@ pR2(reduced0)['McFadden']
  
 Table 3 shows the VIF values of the predictors of the reduced model. All the VIF values are observed to be less than the threshold value of 5. This means that the predictors in the model are not significantly collinear which otherwise would have reduced the accuracy of the model. 
 
-*Table 4*
+\newpage
+
+**Table 4:**
 
 | Model | AIC | BIC | McFadden pseudo R-squared |
 |:------------:|:------------:|:------------:|:------------------------:|
@@ -460,7 +464,7 @@ Table 3 shows the VIF values of the predictors of the reduced model. All the VIF
 
 Table 4 above shows the goodness-of-fit measures of the logistic regression model. As we can see that both the BIC and McFadden pseudo $R^2$ values have decreased in our reduced model relative to the full model. Therefore, the reduced model is a better representative of the logistic regression relationship.
 
-*Table 5* shows the count and the proportion relative to the entire census population and also provides information on their associated probabilities of voting for the Liberals. 
+**Table 5** showing the count and the proportion relative to the entire census population and also provides information on their associated probabilities of voting for the Liberals:
 
 ```{r, include=FALSE}
 
