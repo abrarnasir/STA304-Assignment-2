@@ -156,20 +156,29 @@ hist2 <- ggplot(survey_data, aes(x = age)) +
        title = "Distribution for the Age Values in the Survey")
 hist2
 
-
 #dev.off() 
 #pairs(survey_data[, -c(1)])
 
-full <- glm(party_to_vote_for ~., 
+full <- glm(party_to_vote_for ~ age +
+              as.factor(province) +
+              as.factor(sex) +
+              as.factor(marital_status) +
+              as.factor(education) +
+              as.factor(religion) +
+              as.factor(language) +
+              as.factor(income), 
             data = survey_data, family = "binomial")
 summary(full)
 
-reduced0 <- glm(party_to_vote_for ~ sex +
-                  province +
-                  education +
-                  marital_status +
-                  language, 
-                data = survey_data, family = "binomial")
+y <- survey_data$party_to_vote_for
+province8 <- ifelse(survey_data$province == 8, 1, 0)
+province9 <- ifelse(survey_data$province == 9, 1, 0)
+sex2 <- ifelse(survey_data$sex == 2, 1, 0)
+income4 <- ifelse(survey_data$income == 4, 1, 0)
+survey <- tibble(y, province8, province9, sex2, income4)
+
+reduced0 <- glm(y ~ ., 
+                data = survey, family = "binomial")
 summary(reduced0)
 
 vif(reduced0)
@@ -245,12 +254,21 @@ pR2(reduced0)['McFadden']
 #pR2(reduced1)['McFadden']
 
 bins <- census_data
-vars3 <- c("sex", "province", "education", "marital_status", "language")
+vars3 <- c("sex", "province", "income")
 bins <- bins[vars3]
+
+province8 <- ifelse(bins$province == 8, 1, 0)
+province9 <- ifelse(bins$province == 9, 1, 0)
+sex2 <- ifelse(bins$sex == 2, 1, 0)
+income4 <- ifelse(bins$income == 4, 1, 0)
+census <- tibble(province8, province9, sex2, income4)
+
+bins <- census
 
 bins <- setDT(bins)[,list(Count=.N), names(bins)]
 N <- sum(bins$Count)
 bins$proportion <- bins$Count / N
+bins <- bins %>% rename(count = Count)
 
 bin <- lapply(bins, as.numeric)
 
@@ -262,7 +280,4 @@ bins <- filter(bins, estimate >= 0 & estimate <= 1)
 
 #y_ps <- bins[c(51, 123, 5, 14, 228),]
 y_ps <- bins
-y_ps$y_ps <- y_ps$proportion * y_ps$estimate * 100
-
-y_ps <- y_ps %>% rename(count = Count)
-y_ps$y_ps1 <- 100 - y_ps$y_ps
+y_ps$y_ps <- y_ps$proportion * y_ps$estimate
