@@ -1,19 +1,21 @@
 "0",""
-"0"," "
+"0","# Here you can load in and clean the census data (you may need to do the cleaning in a separate R script). "
 "0",""
 "0","census_data <- read_csv(""gss_clean.csv"")"
 "1","[1mRows: [22m[34m20602[39m [1mColumns: [22m[34m81[39m
 "
-"1","[36m──[39m [1mColumn specification[22m [36m──────────────────────────────────────────────────────────────────────────────────────────────[39m
+"1","[36m──[39m [1mColumn specification[22m [36m───────────────────────────────────────────────────────────────────────────────────────────────[39m
 [1mDelimiter:[22m "",""
-[31mchr[39m (60): sex, place_birth_canada, place_birth_father, place_birth_mother, place_birth_macro_region, place_birth_p...
-[32mdbl[39m (20): caseid, age, age_first_child, age_youngest_child_under_6, total_children, age_start_relationship, age_at...
+[31mchr[39m (60): sex, place_birth_canada, place_birth_father, place_birth_mother, place_birth_macro_region, place_birth_pr...
+[32mdbl[39m (20): caseid, age, age_first_child, age_youngest_child_under_6, total_children, age_start_relationship, age_at_...
 [33mlgl[39m  (1): main_activity
 "
 "1","
 [36mℹ[39m Use `spec()` to retrieve the full column specification for this data.
 [36mℹ[39m Specify the column types or set `show_col_types = FALSE` to quiet this message.
 "
+"0","# You may need additional chunks, in case you want to include some of the cleaning output."
+"0",""
 "0","vars2 <- c(""age"", ""province"", ""sex"", ""marital_status"", ""education"", ""religion_has_affiliation"", ""language_home"", ""income_family"")"
 "0","census_data <- census_data[vars2]"
 "0","census_data <- drop_na(census_data)"
