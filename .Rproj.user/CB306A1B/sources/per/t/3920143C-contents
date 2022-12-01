@@ -265,3 +265,4 @@ y_ps <- bins[c(51, 123, 5, 14, 228),]
 y_ps$y_ps <- y_ps$proportion * y_ps$estimate * 100
 
 y_ps <- y_ps %>% rename(count = Count)
+y_ps$y_ps1 <- 100 - y_ps$y_ps
